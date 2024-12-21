@@ -37,3 +37,77 @@ end //
 
 
 call cancelorder(1);
+
+insert into customerdetails values (1,'hi', 1232),
+(2,'hi', 12232),
+ (3,'hi', 123222);
+
+
+insert into bookings(bookingid, date, tablenumber, customerid) values 
+(1, "2022-10-10", 5,1),
+(2, "2022-11-12", 3,3),
+(3, "2022-10-11", 2,2),
+(4, "2022-10-13", 2,1);
+
+delimiter //
+
+create procedure Checkbooking(in bookingDate datetime, in tableNumber int)
+begin
+select 
+case
+	when exists (select bookingID from bookings 
+		where bookings.date = bookingdate and bookings.tableNumber = tableNumber) 
+	then "table is already booked"
+    else "table is available for booking"
+end;
+end //
+
+call checkbooking("2022-11-12", 3);
+
+delimiter //
+
+create procedure AddValidBooking(in bookingDate datetime, in tableNumber int)
+begin
+start transaction;
+set @bookingID = (select max(bookingID) from bookings) + 1;
+insert into bookings values(@bookingID, bookingDate, tableNumber, 1 );
+case
+	when (select count(bookingID) from bookings as b where b.Date = bookingDate
+		and b.tableNumber = tableNumber) > 1 then select "failed booking"; rollback;
+    else select "success booking"; commit;
+	end case;
+end //
+
+call AddValidBooking("2022-10-17", 5) ;
+
+delimiter //
+
+create procedure AddBooking(in bookingid int, in customerid int, in bookingDate datetime, in tableNumber int)
+begin
+insert into bookings values (bookingid, bookingDate, tablenumber, customerid); 
+end //
+
+call AddBooking(9,3,"2022-12-30", 4);
+
+select * from bookings ;
+
+delimiter //
+
+create procedure UpdateBooking(in bookingid int, in bookingDate datetime)
+begin
+update bookings set bookings.date = bookingDate where bookings.bookingid=bookingid ;
+end //
+
+call UpdateBooking(9, "2022-12-17");
+
+
+delimiter //
+
+create procedure CancelBooking(in bookingid int)
+begin
+delete from bookings where bookings.bookingid = bookingid;
+end //
+
+call CancelBooking(5) ;
+
+
